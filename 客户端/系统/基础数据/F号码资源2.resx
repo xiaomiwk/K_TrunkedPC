@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="f提示1.内容" xml:space="preserve">
+    <value>为空时区号下的所有号码有效。
+
+在浙江拨号模式下，“1-2000,2011-2011,10000-29999,90000-90999,95000-95999”，
+组号范围不能跨段配置，如不能将“90000-90999,95000-95999”配置成“90000-95999”。
+
+在标准拨号模式下，合法范围有两种：
+1.个号或段队组号是以队号或队号范围组成，范围为20-89的子集；
+2.分级组号的号码范围配置同浙江拨号方案。如“20-30,32,34-35,90000-90999,95000-95999”。
+
+最多支持5段。</value>
+  </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="f提示1.图标" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAALiIAAC4iAari3ZIAAAAZdEVYdFNvZnR3YXJlAEFkb2JlIEltYWdlUmVhZHlxyWU8
+        AAAD20lEQVQ4T41VWWyMURS+M+2QIgixhFqKqCUeCKqoB0I0xBJbqCJEEEvsHeaf+f9ZO2tHqbYzlnam
+        NUpbnekoEltLKRqxxU6LBgkevIilYZzvth1TQjx8+c+c5bvn3HPuGSZJEhMJkijyr6DVKeyqnWyfcgvb
+        rjd3nrb/+Nrheec9AMnrthnMXWBzkA98I2PB1YqMvjKzsIuttuwdOdhTVdq25OGHmOL77zsX3X5GeNqu
+        +P476AZ5LpWtsuwbbRaUkbH8GxZ0GjXTqwWW6A6aWPmrUJ/Cmsr5zsMLNxutfVRafRuCYovBGku6eWQ7
+        zwKvQgnukzadRuCxLaRcEEVRDrJ4T1WJzF//ZbHjQDJOR7bp6t1MS44AZOhgS3G4psr9dZ/iCq4EQEhk
+        cp6hIGkVcBp94FSGzF/XuNFoG2BVpXG9Ua2Kmp3pXdS16NYDADJ0gqRTWMhnk9HWV172/MvIg2ey0okD
+        McyxewdbYcsey8obQin23ElNZLpojSjJETQh1y+x4OsQABk62OBjUSnZMlt2ImKX2XImgItlKreyvgVX
+        L8Z5q0/DQS1poyIvmjopT7XnjgUgR9rINxoJDPJUBXoXXrsKLrY23TkwuvTR5xS7azKlLdNIEr8LfFHG
+        rExvao+jN28AkKH7zUdG2U2Un3jybb3J0Y/ursLe/vi9Nzv0po68W3Qy5gmZorxJOSeo6w0hADJ0vAry
+        ga+WYpQ6Q0wH4khwB42sh6/2Wndf7R06jRw0nAzA6ejm5P3FalZW9x2ADB1sLX4gBYjjVr+CK1WcsJuv
+        9i4IpVaElCEIs0tE5q8PAZChg+0vhJVsjLvCQiW/pZI7RZb8P4TwRUyaztiOSn6b4Arq2bp0Z/+o0sef
+        aZintm7Kvwkjm7KUxg1N2WByxPKxoVTP9fdWn20em2iMBAWF75CGtxH4dYdaPj7wRUyc93JFbGHNZT42
+        dhrGldasUejiYod7SvNgK2h4eZeTcsrMLYMNuXmww6+FsktC7HJbdgK4wk9vnDtoZoEXP2gu4620mnC6
+        XiNELXG4pw/Pu3AUgAwdbDh4o9E+EM8VzxYc/OnhLuhy5Qa1ig3JrzzCAi8bFzgPz8EANy2CXcxKZQIt
+        v4FFGQdnMv+Lr/H5lcVYLOAAF39CELQaDQNpUq5fxGrq6btRMyfTk7rJZB9Ag9sBoGUQN3dPfkqvI9er
+        seLGu8oNeopBLDjAFRaaM6UFq8RzHDY074KPlul7wsdOx+40AJCxYIfkXyxaY94zApkiJpKjaTgjFFjr
+        KC8rbTPukS10HkpOdJULBDXJM6CDzUrd/fMvQGI/Ab5MwsQG+29YAAAAAElFTkSuQmCC
+</value>
+  </data>
+</root>

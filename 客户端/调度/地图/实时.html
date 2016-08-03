@@ -1,0 +1,557 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+    <meta name="keywords" content="百度地图,百度地图API，百度地图自定义工具，百度地图所见即所得工具" />
+    <meta name="description" content="百度地图API自定义地图，帮助用户在可视化操作下生成百度地图" />
+    <title>百度地图API自定义地图</title>
+
+    <!--引用百度地图API-->
+    <style type="text/css">
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .iw_poi_title {
+            color: #CC5522;
+            font-size: 14px;
+            font-weight: bold;
+            overflow: hidden;
+            padding-right: 13px;
+            white-space: nowrap;
+        }
+
+        .iw_poi_content {
+            font: 12px arial,sans-serif;
+            overflow: visible;
+            padding-top: 4px;
+            white-space: -moz-pre-wrap;
+            word-wrap: break-word;
+        }
+
+        #r-result {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 200px;
+            z-index: 100;
+            display: none;
+        }
+    </style>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?key=&v=1.4"></script>
+    <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
+</head>
+
+<body>
+    <!--百度地图容器-->
+    <div style="border: #ccc solid 1px;" id="dituContent"></div>
+    <div id="r-result"></div>
+    <input id="do触发事件" type="button" value="事件名称" style="display: none;" />
+    <input id="in事件参数" type="text" value="事件参数" style="display: none;" />
+
+</body>
+<script type="text/javascript">
+    //全局变量        
+    var _标记集合 = new Array();  //成员是{ 标记id, 标记json, Marker对象, Circle对象 }
+    var _地图中心模式 = "手动";
+    var _地图中心标记序列 = new Array();
+    var _基站集合 = new Array();  //成员是{ 标记id, 标记json, Marker对象, Circle对象 }
+    var _查询位置服务;
+    var _选择区域集合 = new Array();  //成员是{ Overlays对象 }
+    var _地图操作模式 = "移动地图";
+    var _绘图点集合 = new Array();  //成员是{ Point对象 }
+    var _标注集合 = new Array();  //成员是{ 标记id, 标记json, Marker对象 }
+    var _测距线;
+
+    function 初始化地图(__城市) {
+        createMap(__城市);//创建地图
+        setMapEvent();//设置地图事件
+        addMapControl();//向地图添加控件
+        
+        map.addEventListener("click", function (e) {
+            if (_地图操作模式 == "移动地图") {
+                return;
+            }
+            if (_地图操作模式 == "绘制长方形区域") {
+                if (_绘图点集合.length == 0) {
+                    _绘图点集合.push(e.point);
+                } else {
+                    var __pStart = _绘图点集合[0];
+                    var __pEnd = e.point;
+                    var __参数 = '{\"左上角\":' + '{\"经度\":' + __pStart.lng + ',\"纬度\":' + __pStart.lat + '},'
+                        + '\"右下角\":' + '{\"经度\":' + __pEnd.lng + ',\"纬度\":' + __pEnd.lat + '}}';
+                    var __polygon = new BMap.Polygon([
+                      new BMap.Point(__pStart.lng, __pStart.lat),
+                      new BMap.Point(__pEnd.lng, __pStart.lat),
+                      new BMap.Point(__pEnd.lng, __pEnd.lat),
+                      new BMap.Point(__pStart.lng, __pEnd.lat)
+                    ], { strokeColor: "blue", strokeWeight: 6, strokeOpacity: 0.5 });
+                    map.addOverlay(__polygon);
+                    _选择区域集合.push(__polygon);
+                    执行服务器事件("绘制长方形区域", __参数);
+                    _绘图点集合.splice(0, _绘图点集合.length);
+                }
+                return;
+            }
+            if (_地图操作模式 == "绘制圆形区域") {
+                if (_绘图点集合.length == 0) {
+                    _绘图点集合.push(e.point);
+                } else {
+                    var __pStart = _绘图点集合[0];
+                    var __pEnd = e.point;
+                    var __半径 = 计算两点间距(__pStart.lng, __pStart.lat, __pEnd.lng, __pEnd.lat);
+                    var __参数 = '{\"圆心\":' + '{\"经度\":' + __pStart.lng + ',\"纬度\":' + __pStart.lat + '},'
+                        + '\"半径\":' + __半径 + '}';
+                    var __circle = new BMap.Circle(__pStart, __半径);
+                    map.addOverlay(__circle);
+                    _选择区域集合.push(__circle);
+                    执行服务器事件("绘制圆形区域", __参数);
+                    _绘图点集合.splice(0, _绘图点集合.length);
+                }
+                return;
+            }
+            if (_地图操作模式 == "绘制圆形区域半径1公里") {
+                var __pStart = e.point;
+                var __半径 = 1000;
+                var __参数 = '{\"圆心\":' + '{\"经度\":' + __pStart.lng + ',\"纬度\":' + __pStart.lat + '},'
+                    + '\"半径\":' + __半径 + '}';
+                var __circle = new BMap.Circle(__pStart, __半径);
+                map.addOverlay(__circle);
+                _选择区域集合.push(__circle);
+                执行服务器事件("绘制圆形区域半径1公里", __参数);
+                return;
+            }
+            if (_地图操作模式 == "测距") {
+                if (_绘图点集合.length == 0) {
+                    _绘图点集合.push(e.point);
+                    执行服务器事件("测距", "第一步");
+                } else {
+                    var __pStart = _绘图点集合[0];
+                    var __pEnd = e.point;
+                    var __参数 = map.getDistance(__pStart, __pEnd);
+                    //alert('距离是：' + map.getDistance(__pStart, __pEnd) + ' 米。');     //获取两点距离
+                    var __polygon = new BMap.Polyline([__pStart, __pEnd], { strokeColor: "blue", strokeWeight: 6, strokeOpacity: 0.5 });  //定义折线
+                    map.addOverlay(__polygon);
+                    _测距线 =__polygon;
+                    执行服务器事件("测距", __参数);
+                    _绘图点集合.splice(0, _绘图点集合.length);
+                }
+                return;
+            }
+            if (_地图操作模式 == "绘制标记") {
+                var __pStart = e.point;
+                var __参数 =  '{\"经度\":' + __pStart.lng + ',\"纬度\":' + __pStart.lat + '}';
+                执行服务器事件("绘制标记", __参数);
+                return;
+            }
+        });
+
+    }
+
+    function 添加标记(__json字符串) {
+        var json = $.parseJSON(__json字符串);   //jquery的.parseJSON（）方法
+        var point = new BMap.Point(json.经度, json.纬度);
+        var iconImg = createIcon(json);
+        var marker = new BMap.Marker(point, { icon: iconImg });
+        var label = new BMap.Label(json.名称, { "offset": new BMap.Size(9, -20) });
+        marker.setLabel(label);
+        map.addOverlay(marker);
+        label.setStyle({
+            borderColor: "green",
+            color: "green",
+            cursor: "pointer"
+        });
+
+        (function () {
+            var _iw = createInfoWindow(json);
+            var _marker = marker;
+            _marker.addEventListener("click", function () {
+                this.openInfoWindow(_iw);
+            });
+            _iw.addEventListener("open", function () {
+                _marker.getLabel().hide();
+            });
+            _iw.addEventListener("close", function () {
+                _marker.getLabel().show();
+            });
+            label.addEventListener("click", function () {
+                _marker.openInfoWindow(_iw);
+            });
+            if (!!json.打开描述) {
+                label.hide();
+                _marker.openInfoWindow(_iw);
+            }
+        })();
+
+        //添加半径
+        var __误差半径 = json.误差半径;
+        var __circle = new BMap.Circle(point, __误差半径, { strokeWeight: 1, strokeColor: "#009ffc", fillColor: "#009ffc", strokeOpacity: 0.5, fillOpacity: 0.1, strokeStyle: "dashed" });
+        map.addOverlay(__circle);
+
+        //加入缓存
+        _标记集合.push(new Array(json.Id, json, marker, __circle));
+
+        //显示标记
+        if (_地图中心模式 == "指定标记序列") {
+            //if (map.getZoom() < 15) {
+            //    map.setZoom(15);
+            //}
+            for (var i = 0; i < _地图中心标记序列.length; i++) {
+                if (_地图中心标记序列[i] == json.Id) {
+                    设置地图中心模式("指定标记序列");
+                }
+            }
+        } else if (_地图中心模式 == "概览") {
+            设置地图中心模式("概览");
+        }
+    }
+
+    function 清除所有标记() {
+        map.clearOverlays();
+        _标记集合.splice(0, _标记集合.length);
+    }
+
+    function 删除标记(__标记Id) {
+        for (var i = 0; i < _标记集合.length; i++) {
+            if (_标记集合[i][0] == __标记Id) {
+                var json = _标记集合[i][1];
+                var marker = _标记集合[i][2];
+                var circle = _标记集合[i][3];
+                map.removeOverlay(marker);
+                map.removeOverlay(circle);
+                _标记集合.splice(i, 1);
+                return;
+            }
+        }
+    }
+
+    function 设置地图大小(__宽, __高) {
+        document.getElementById("dituContent").style.width = __宽;
+        document.getElementById("dituContent").style.height = __高;
+        document.getElementById("r-result").style.left = (parseInt(__宽) - 200) + "px";
+    }
+
+    function 设置地图中心模式(__地图中心模式) {
+        _地图中心模式 = __地图中心模式;
+        if (_地图中心模式 == "指定标记序列") {
+            var __points = new Array();
+            for (var i = 0; i < _标记集合.length; i++) {
+                for (var j = 0; j < _地图中心标记序列.length; j++) {
+                    if (_标记集合[i][0] == _地图中心标记序列[j]) {
+                        var json = _标记集合[i][1];
+                        var marker = _标记集合[i][2];
+                        __points.push(marker.getPosition());
+                    }
+                }
+            }
+            if (__points.length == 1) {
+                map.setViewport(__points, { margins: new Array(20, 20, 20, 20), zoomFactor: -2 });
+            } else {
+                map.setViewport(__points, { margins: new Array(20, 20, 20, 20) });
+            }
+            return;
+        }
+        if (_地图中心模式 == "概览") {
+            var __points1 = new Array();
+            for (var i = 0; i < _标记集合.length; i++) {
+                __points1.push(_标记集合[i][2].getPosition());
+            }
+            if (__points1.length == 1) {
+                map.setViewport(__points1, { margins: new Array(20, 20, 20, 20), zoomFactor: -2 });
+            } else {
+                map.setViewport(__points1, { margins: new Array(20, 20, 20, 20) });
+            }
+            //if (map.getZoom() > 17) {
+            //    map.setZoom(17);
+            //}
+            return;
+        }
+    }
+
+    function 设置地图中心标记序列(__标记序列) {
+        _地图中心标记序列 = __标记序列.split(",");
+        var __points = new Array();
+        for (var i = 0; i < _标记集合.length; i++) {
+            for (var j = 0; j < _地图中心标记序列.length; j++) {
+                if (_标记集合[i][0] == _地图中心标记序列[j]) {
+                    var json = _标记集合[i][1];
+                    var marker = _标记集合[i][2];
+                    __points.push(marker.getPosition());
+                }
+            }
+        }
+        if (__points.length == 1) {
+            map.setViewport(__points, { margins: new Array(20, 20, 20, 20), zoomFactor: -2 });
+        } else {
+            map.setViewport(__points, { margins: new Array(20, 20, 20, 20) });
+        }
+    }
+
+    //创建地图函数：
+    function createMap(__城市) {
+        var map = new BMap.Map("dituContent");//在百度地图容器中创建一个地图
+        //var point = new BMap.Point(城市);//定义一个中心点坐标
+        map.centerAndZoom(__城市, 14);//设定地图的中心点和坐标并将地图显示在地图容器中
+        window.map = map;//将map变量存储在全局
+    }
+
+    //地图事件设置函数：
+    function setMapEvent() {
+        map.enableDragging();//启用地图拖拽事件，默认启用(可不写)
+        map.enableScrollWheelZoom();//启用地图滚轮放大缩小
+        map.enableDoubleClickZoom();//启用鼠标双击放大，默认启用(可不写)
+        map.enableKeyboard();//启用键盘上下左右键移动地图
+    }
+
+    //向地图添加控件：
+    function addMapControl() {
+        //向地图中添加缩放控件
+        var ctrl_nav = new BMap.NavigationControl({ anchor: BMAP_ANCHOR_TOP_LEFT, type: BMAP_NAVIGATION_CONTROL_LARGE });
+        map.addControl(ctrl_nav);
+        //向地图中添加缩略图控件
+        var ctrl_ove = new BMap.OverviewMapControl({ anchor: BMAP_ANCHOR_BOTTOM_RIGHT, isOpen: true });
+        map.addControl(ctrl_ove);
+        //向地图中添加比例尺控件
+        var ctrl_sca = new BMap.ScaleControl({ anchor: BMAP_ANCHOR_BOTTOM_LEFT });
+        map.addControl(ctrl_sca);
+    }
+
+    //创建InfoWindow
+    function createInfoWindow(json) {
+        var iw = new BMap.InfoWindow(
+               "<b class='iw_poi_title'>" + json.名称 + "</b>"
+                + "<div class='iw_poi_content'>全称：" + json.全称 + "</div>"
+                + "<div class='iw_poi_content'>号码：" + json.号码 + "</div>"
+                + "<div class='iw_poi_content'>描述：" + json.描述 + "</div>"
+                + "<div class='iw_poi_content'>偏差：精确到" + json.误差半径 + "米</div>"
+                + "<div class='iw_poi_content'>时间：" + json.时间 + "</div>"
+                + "<div style='margin-top:5px'> "
+                + "  <input type='button' value=' 呼叫 ' onclick=\"执行服务器事件('呼叫','" + json.Id + "')\"/>"
+                + "  <input type='button' value='发短信' onclick=\"执行服务器事件('发短信','" + json.Id + "')\"/>"
+                + "</div>");
+        return iw;
+        //+ "<div class='iw_poi_content'>序号：" + json.Id + "</div>"
+    }
+
+    //创建方向图标
+    function createIcon(json) {
+        var icon = new BMap.Icon("images/direction/12.gif", new BMap.Size(30, 30));
+        var __方向 = json.方向;
+        if (__方向 > 15 && __方向 <= 345) {
+            var __num = Math.floor((__方向 - 15) / 30 + 1);
+            icon.setImageUrl("images/direction/" + __num + ".gif");
+        }
+        return icon;
+    }
+
+    //设置标注样式
+    function 设置标注样式(__Id, style) {
+        for (var i = 0; i < _标记集合.length; i++) {
+            if (_标记集合[i][0] == __Id) {
+                var json = _标记集合[i][1];
+                var marker = _标记集合[i][2];
+                if (style == "即将离线") {
+                    marker.getLabel().setStyle({
+                        borderColor: "red",
+                        color: "red"
+                    });
+                    var __icon1 = marker.getIcon();
+                    var __路径1 = __icon1.imageUrl;
+                    var __num1 = __路径1.charAt(__路径1.lastIndexOf("/") + 1);
+                    __路径1 = "images/direction/" + __num1 + "-2.png";
+                    __icon1.setImageUrl(__路径1);
+                    marker.setIcon(__icon1);
+                    //alert(__路径1);
+                }
+                if (style == "离线") {
+                    marker.getLabel().setStyle({
+                        //borderColor: "gray",
+                        color: "gray"
+                    });
+                    var __icon2 = marker.getIcon();
+                    var __路径2 = __icon2.imageUrl;
+                    var __num2 = __路径2.charAt(__路径2.lastIndexOf("/") + 1);
+                    __路径2 = "images/direction/" + __num2 + "-3.png";
+                    __icon2.setImageUrl(__路径2);
+                    marker.setIcon(__icon2);
+                    //alert(__路径2);
+                }
+                if (style == "关注") {
+                    marker.getLabel().setStyle({
+                        //borderColor: "orange",
+                        backgroundColor: "yellow"
+                        //,color: "orange"
+                    });
+                }
+                if (style == "取消关注") {
+                    marker.getLabel().setStyle({
+                        borderColor: "green",
+                        backgroundColor: "white"
+                        //,color: "green"
+                    });
+                }
+                return;
+            }
+        }
+    }
+
+    function 添加基站(__json字符串) {
+        var json = $.parseJSON(__json字符串);   //jquery的.parseJSON（）方法
+        var point = new BMap.Point(json.经度, json.纬度);
+        var iconImg = new BMap.Icon("images/基站.png", new BMap.Size(30, 30));
+        var marker = new BMap.Marker(point, { icon: iconImg });
+        var label = new BMap.Label(json.名称, { "offset": new BMap.Size(9, -20) });
+        marker.setLabel(label);
+        map.addOverlay(marker);
+        label.setStyle({
+            borderColor: "black",
+            color: "black",
+            cursor: "pointer"
+        });
+
+        //添加半径
+        var __半径 = json.覆盖半径;
+        var __circle = new BMap.Circle(point, __半径, { strokeWeight: 1, strokeColor: "#0090fc", fillColor: "#0090fc", strokeOpacity: 0.5, fillOpacity: 0.1, strokeStyle: "dashed" });
+        map.addOverlay(__circle);
+
+        //加入缓存
+        _基站集合.push(new Array(json.Id, json, marker, __circle));
+        map.panTo(marker.getPosition());
+
+    }
+
+    function 删除基站(__标记Id) {
+        for (var i = 0; i < _基站集合.length; i++) {
+            if (_基站集合[i][0] == __标记Id) {
+                var json = _基站集合[i][1];
+                var marker = _基站集合[i][2];
+                var circle = _基站集合[i][3];
+                map.removeOverlay(marker);
+                map.removeOverlay(circle);
+                _基站集合.splice(i, 1);
+                return;
+            }
+        }
+    }
+
+    function 添加标注(__json字符串) {
+        var json = $.parseJSON(__json字符串);   //jquery的.parseJSON（）方法
+        var point = new BMap.Point(json.经度, json.纬度);
+        var iconImg = new BMap.Icon("images/标注.png", new BMap.Size(30, 30));
+        var marker = new BMap.Marker(point, { icon: iconImg });
+        var label = new BMap.Label(json.名称, { "offset": new BMap.Size(9, -20) });
+        marker.setLabel(label);
+        map.addOverlay(marker);
+        label.setStyle({
+            borderColor: "black",
+            color: "black",
+            cursor: "pointer"
+        });
+
+        //加入缓存
+        _标注集合.push(new Array(json.Id, json, marker));
+        map.panTo(marker.getPosition());
+
+    }
+
+    function 删除标注(__标记Id) {
+        for (var i = 0; i < _标注集合.length; i++) {
+            if (_标注集合[i][0] == __标记Id) {
+                var json = _标注集合[i][1];
+                var marker = _标注集合[i][2];
+                map.removeOverlay(marker);
+                _标注集合.splice(i, 1);
+                return;
+            }
+        }
+    }
+
+    function 执行服务器事件(__事件名称, __事件参数) {
+        document.getElementById("in事件参数").value = __事件参数;
+        document.getElementById("do触发事件").value = __事件名称;
+        document.getElementById("do触发事件").click();
+    }
+
+    function 查询位置(__关键词) {
+        var options = {
+            //onSearchComplete: function (results) {
+            //    // 判断状态是否正确   
+            //    if (local.getStatus() == BMAP_STATUS_SUCCESS) {
+            //        var s = "[";
+            //        for (var i = 0; i < results.getCurrentNumPois() ; i++) {
+            //            //s.push(results.getPoi(i).title + ", " + results.getPoi(i).address);
+            //            if (s != "[") {
+            //                s = s + ",";
+            //            }
+            //            s = s + "{ \"Title\":\"" + results.getPoi(i).title + "\", \"Address\":\"" + results.getPoi(i).address + "\"}";
+            //        }
+            //        s = s + "]";
+            //    } else {
+            //    }
+            //},
+            renderOptions: { map: map, autoViewport: true, panel: "r-result", selectFirstResult: false }
+            ,pageCapacity: 5
+            //renderOptions: { map: map, autoViewport: true, selectFirstResult: false }
+        };
+        _查询位置服务 = new BMap.LocalSearch(map, options);
+        _查询位置服务.search(__关键词);
+        document.getElementById("r-result").style.display = "block";
+    }
+
+    function 关闭查询位置() {
+        _查询位置服务.clearResults();
+        _查询位置服务.search("");
+        document.getElementById("r-result").style.display = "none";
+    }
+
+    /// 两点距离
+    /// </summary>
+    /// <param name="lng1">经度1</param>
+    /// <param name="lat1">纬度1</param>
+    /// <param name="lng2">经度2</param>
+    /// <param name="lat2">纬度2</param>
+    /// <returns>距离:米</returns>
+    /// <Author>lc</Author>
+    /// <FinishT>2009-12-30</FinishT>
+    function 计算两点间距(lng1, lat1, lng2, lat2) {
+        var latRadians1 = lat1 * (Math.PI / 180);
+        var latRadians2 = lat2 * (Math.PI / 180);
+        var latRadians = latRadians1 - latRadians2;
+        var lngRadians = lng1 * (Math.PI / 180) - lng2 * (Math.PI / 180);
+        var f = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(latRadians / 2), 2) + Math.cos(latRadians1) * Math.cos(latRadians2) * Math.pow(Math.sin(lngRadians / 2), 2)));
+        return f * 6378137;
+    }
+    
+    function 设置地图操作模式(parameters) {
+        if (parameters != _地图操作模式 && _绘图点集合.length > 0) {
+            _绘图点集合.splice(0, _绘图点集合.length);
+        }
+        _地图操作模式 = parameters;
+        if (_地图操作模式 == "移动地图") {
+            map.setDefaultCursor("pointer");
+            return;
+        }
+        map.setDefaultCursor("crosshair");
+    }
+
+    function 删除上一个选择区域() {
+        var __上一个区域 = _选择区域集合.pop();
+        map.removeOverlay(__上一个区域);
+    }
+
+    function 删除所有选择区域() {
+        var __数量 = _选择区域集合.length;
+        for (var i = 0; i < __数量; i++) {
+            var __上一个区域 = _选择区域集合.pop();
+            map.removeOverlay(__上一个区域);
+        }
+    }
+
+    function 删除测距线() {
+        map.removeOverlay(_测距线);
+    }
+
+</script>
+</html>
